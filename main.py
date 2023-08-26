@@ -1,12 +1,12 @@
 import os
 import argparse
+import tg_bot
 
 from dotenv import load_dotenv
 
 
 def main():
-    # load_dotenv()
-    # bot = telegram.Bot(os.environ.get('TELEGRAM_TOKEN'))
+    load_dotenv()
 
     parser = argparse.ArgumentParser(description='Приложение "Викторина"')
     parser.add_argument(
@@ -42,6 +42,8 @@ def main():
         elif 'Ответ:' in content:
             answer = content[content.find(':')+2:].replace('\n', ' ')
             questions_answers[question] = answer
+
+    tg_bot.start_bot()
 
 
 if __name__ == '__main__':
