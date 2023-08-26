@@ -1,6 +1,6 @@
 import os
 import argparse
-import tg_bot_murkups
+import tg_bot_markups
 import logging
 import random
 
@@ -21,7 +21,7 @@ def start(update: Update, context: CallbackContext):
     user = update.effective_user
     update.message.reply_markdown_v2(
         fr'Привет, {user.mention_markdown_v2()}\! Я бот для викторин\.',
-        reply_markup=tg_bot_murkups.first_markup,
+        reply_markup=tg_bot_markups.first_markup,
     )
 
 
@@ -33,7 +33,7 @@ def echo(update: Update, context: CallbackContext):
         message = update.message.text
     update.message.reply_text(
         message,
-        reply_markup=tg_bot_murkups.first_markup,
+        reply_markup=tg_bot_markups.first_markup,
     )
 
 
