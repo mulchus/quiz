@@ -34,7 +34,15 @@ def main():
         except (FileNotFoundError, ValueError) as error:
             print(f'Неверно указан путь к файлу.\nОшибка: {error}')
 
+    separated_contents = file_contents.split('\n\n')
+    questions_answers = {}
+    for content in separated_contents:
+        if 'Вопрос ' in content:
+            question = content[content.find(':')+2:].replace('\n', ' ')
+        elif 'Ответ:' in content:
+            answer = content[content.find(':')+2:].replace('\n', ' ')
+            questions_answers[question] = answer
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
