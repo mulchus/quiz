@@ -1,6 +1,7 @@
 media/
 staticfiles/
 quiz-questions/
+.idea/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
