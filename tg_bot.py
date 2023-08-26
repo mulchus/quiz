@@ -1,8 +1,9 @@
 import os
 import logging
 
-from telegram import Update, ForceReply
+from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+import tg_bot_murkups
 
 
 logging.basicConfig(
@@ -14,13 +15,16 @@ logger = logging.getLogger(__name__)
 def start(update: Update, context: CallbackContext):
     user = update.effective_user
     update.message.reply_markdown_v2(
-        fr'Здравствуйте, {user.mention_markdown_v2()}\!',
-        reply_markup=ForceReply(selective=True),
+        fr'Привет, {user.mention_markdown_v2()}\! \/nЯ бот для викторин\.',
+        reply_markup=tg_bot_murkups.first_markup,
     )
 
 
 def echo(update: Update, context: CallbackContext):
-    update.message.reply_text(update.message.text)
+    update.message.reply_text(
+        update.message.text,
+        reply_markup=tg_bot_murkups.remove_markup,
+    )
 
 
 def start_bot():
