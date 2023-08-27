@@ -6,7 +6,7 @@ import random
 import redis
 
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, ConversationHandler, RegexHandler
 from dotenv import load_dotenv
 
 
@@ -18,33 +18,62 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 r = redis.Redis(host='localhost', port=6379, db=0)
 
+CHOOSING = 0
 
-def start(update: Update, context: CallbackContext):
-    user = update.effective_user
+
+def start(bot, update):
+    # print(update.message)
+    # user = update.message.from_user
     update.message.reply_markdown_v2(
-        fr'Привет, {user.mention_markdown_v2()}\! Я бот для викторин\.',
+        fr'Привет! Я бот для викторин\.',  # {user.mention_markdown_v2()}\
+        reply_markup=tg_bot_markups.first_markup,
+    )
+    return CHOOSING
+
+
+def new_question(bot, update):
+    global questions_answers
+    message = list(questions_answers)[random.randrange(len(questions_answers) - 1)]
+    r.mset({str(update.effective_user.id): message.encode('utf-8'), })
+    update.message.reply_text(
+        message,
         reply_markup=tg_bot_markups.first_markup,
     )
 
 
 def echo(update: Update, context: CallbackContext):
     global questions_answers
-    if update.message.text == 'Новый вопрос':
-        message = list(questions_answers)[random.randrange(len(questions_answers)-1)]
-        r.mset({str(update.effective_user.id): message.encode('utf-8'),})
+    short_correct_answer = questions_answers[r.get(str(update.effective_user.id)).\
+        decode('utf-8')].split('.', 1)[0].replace('"', '')
+    if update.message.text.lower() in short_correct_answer.lower() and \
+        (update.message.text.lower().count(' ') / short_correct_answer.lower().count(' ') * 100) > 50:
+        message = 'Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»'
     else:
-        short_correct_answer = questions_answers[r.get(str(update.effective_user.id)).\
-            decode('utf-8')].split('.', 1)[0].replace('"', '')
-        print(short_correct_answer)
-        if update.message.text.lower() in short_correct_answer.lower() and \
-            (update.message.text.lower().count(' ') / short_correct_answer.lower().count(' ') * 100) > 50:
-            message = 'Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»'
-        else:
-            message = 'Неправильно… Попробуешь ещё раз?'
+        message = 'Неправильно… Попробуешь ещё раз?'
     update.message.reply_text(
         message,
         reply_markup=tg_bot_markups.first_markup,
     )
+
+
+def give_up(bot, update):
+    pass
+
+
+def my_count(bot, update):
+    pass
+
+
+def cancel(bot, update):
+    user = update.message.from_user
+    logger.info(f'User {user.first_name} canceled the conversation.')
+    update.message.reply_text('Bye! I hope we can talk again some day.',
+                              reply_markup=tg_bot_markups.remove_markup)
+    return ConversationHandler.END
+
+
+def _error(bot, update, _error):
+    logger.warning(f'Update {update} caused error {_error}')
 
 
 def main():
@@ -88,8 +117,22 @@ def main():
 
     updater = Updater(os.environ.get('TELEGRAM_TOKEN'))
     dispatcher = updater.dispatcher
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+    conversation_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+        states={
+            CHOOSING: [RegexHandler('^Новый вопрос$', new_question),
+                       RegexHandler('^Сдаться$', give_up),
+                       RegexHandler('^Мой счет$', my_count),
+                       ],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)]
+    )
+
+    dispatcher.add_handler(conversation_handler)
+    dispatcher.add_error_handler(_error)
+    # dispatcher.add_handler(CommandHandler("start", start))
+    # dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+
     updater.start_polling()
     updater.idle()
 
