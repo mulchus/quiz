@@ -31,15 +31,20 @@ def echo(update: Update, context: CallbackContext):
     global questions_answers
     if update.message.text == 'Новый вопрос':
         message = list(questions_answers)[random.randrange(len(questions_answers)-1)]
-        print(update.effective_user.id)
         r.mset({str(update.effective_user.id): message.encode('utf-8'),})
     else:
-        message = update.message.text
+        short_correct_answer = questions_answers[r.get(str(update.effective_user.id)).\
+            decode('utf-8')].split('.', 1)[0].replace('"', '')
+        print(short_correct_answer)
+        if update.message.text.lower() in short_correct_answer.lower() and \
+            (update.message.text.lower().count(' ') / short_correct_answer.lower().count(' ') * 100) > 50:
+            message = 'Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»'
+        else:
+            message = 'Неправильно… Попробуешь ещё раз?'
     update.message.reply_text(
         message,
         reply_markup=tg_bot_markups.first_markup,
     )
-    print(r.get(str(update.effective_user.id)).decode('utf-8'))
 
 
 def main():
