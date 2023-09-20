@@ -18,20 +18,21 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 r = redis.Redis(host='localhost', port=6379, db=0)
 
-CHOOSING = 0
+CHOOSING, TYPING_CHOICE = range(1)
 
 
-def start(bot, update):
+def start(update, _):
+    # print(context.matches)
     # print(update.message)
     # user = update.message.from_user
-    update.message.reply_markdown_v2(
-        fr'Привет! Я бот для викторин\.',  # {user.mention_markdown_v2()}\
+    update.message.reply_text(  # reply_markdown_v2(
+        fr'Привет! Я бот для викторин.',  # {user.mention_markdown_v2()}\
         reply_markup=tg_bot_markups.first_markup,
     )
     return CHOOSING
 
 
-def new_question(bot, update):
+def handle_new_question_request(update, _):
     global questions_answers
     message = list(questions_answers)[random.randrange(len(questions_answers) - 1)]
     r.mset({str(update.effective_user.id): message.encode('utf-8'), })
@@ -39,6 +40,13 @@ def new_question(bot, update):
         message,
         reply_markup=tg_bot_markups.first_markup,
     )
+
+
+def handle_solution_attempt(update, _):
+    update.message.reply_text(
+        update.message.text,
+    )
+    return TYPING_CHOICE
 
 
 def echo(update: Update, context: CallbackContext):
@@ -56,15 +64,15 @@ def echo(update: Update, context: CallbackContext):
     )
 
 
-def give_up(bot, update):
+def give_up(update, _):
     pass
 
 
-def my_count(bot, update):
+def my_count(update, _):
     pass
 
 
-def cancel(bot, update):
+def cancel(update, _):
     user = update.message.from_user
     logger.info(f'User {user.first_name} canceled the conversation.')
     update.message.reply_text('Bye! I hope we can talk again some day.',
@@ -120,10 +128,14 @@ def main():
     conversation_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            CHOOSING: [RegexHandler('^Новый вопрос$', new_question),
-                       RegexHandler('^Сдаться$', give_up),
-                       RegexHandler('^Мой счет$', my_count),
+            CHOOSING: [MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
+                       MessageHandler(Filters.regex('^Сдаться$'), give_up),
+                       MessageHandler(Filters.regex('^Мой счет$'), my_count),
                        ],
+            TYPING_CHOICE: [MessageHandler(Filters.text,
+                                           handle_solution_attempt,
+                                           pass_user_data=True),
+                            ],
         },
         fallbacks=[CommandHandler('cancel', cancel)]
     )
