@@ -5,10 +5,9 @@ import logging
 import random
 import redis
 
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, ConversationHandler, RegexHandler
+# from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 from dotenv import load_dotenv
-
 
 global questions_answers
 
@@ -18,7 +17,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 r = redis.Redis(host='localhost', port=6379, db=0)
 
-CHOOSING, TYPING_CHOICE = range(1)
+CHOOSING, TYPING_ANSWER = range(2)
 
 
 def start(update, _):
@@ -40,28 +39,25 @@ def handle_new_question_request(update, _):
         message,
         reply_markup=tg_bot_markups.first_markup,
     )
+    return TYPING_ANSWER
 
 
 def handle_solution_attempt(update, _):
-    update.message.reply_text(
-        update.message.text,
-    )
-    return TYPING_CHOICE
-
-
-def echo(update: Update, context: CallbackContext):
     global questions_answers
-    short_correct_answer = questions_answers[r.get(str(update.effective_user.id)).\
-        decode('utf-8')].split('.', 1)[0].replace('"', '')
+    short_correct_answer = questions_answers[r.get(str(update.effective_user.id)).decode('utf-8')].\
+        split('.', 1)[0].replace('"', '')
     if update.message.text.lower() in short_correct_answer.lower() and \
-        (update.message.text.lower().count(' ') / short_correct_answer.lower().count(' ') * 100) > 50:
+            ((update.message.text.lower().count(' ') + 1) / (short_correct_answer.lower().count(' ') + 1) * 100) > 50:
         message = 'Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»'
+        return_params = CHOOSING
     else:
         message = 'Неправильно… Попробуешь ещё раз?'
+        return_params = TYPING_ANSWER
     update.message.reply_text(
         message,
         reply_markup=tg_bot_markups.first_markup,
     )
+    return return_params
 
 
 def give_up(update, _):
@@ -118,9 +114,9 @@ def main():
     questions_answers = {}
     for content in separated_contents:
         if 'Вопрос ' in content:
-            question = content[content.find(':')+2:].replace('\n', ' ')
+            question = content[content.find(':') + 2:].replace('\n', ' ')
         elif 'Ответ:' in content:
-            answer = content[content.find(':')+2:].replace('\n', ' ')
+            answer = content[content.find(':') + 2:].replace('\n', ' ')
             questions_answers[question] = answer
 
     updater = Updater(os.environ.get('TELEGRAM_TOKEN'))
@@ -132,9 +128,7 @@ def main():
                        MessageHandler(Filters.regex('^Сдаться$'), give_up),
                        MessageHandler(Filters.regex('^Мой счет$'), my_count),
                        ],
-            TYPING_CHOICE: [MessageHandler(Filters.text,
-                                           handle_solution_attempt,
-                                           pass_user_data=True),
+            TYPING_ANSWER: [MessageHandler(Filters.text, handle_solution_attempt, pass_user_data=True),
                             ],
         },
         fallbacks=[CommandHandler('cancel', cancel)]
