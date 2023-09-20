@@ -21,11 +21,8 @@ CHOOSING, TYPING_ANSWER = range(2)
 
 
 def start(update, _):
-    # print(context.matches)
-    # print(update.message)
-    # user = update.message.from_user
-    update.message.reply_text(  # reply_markdown_v2(
-        fr'Привет! Я бот для викторин.',  # {user.mention_markdown_v2()}\
+    update.message.reply_text(
+        fr'Привет! Я бот для викторин.',
         reply_markup=tg_bot_markups.first_markup,
     )
     return CHOOSING
@@ -60,8 +57,13 @@ def handle_solution_attempt(update, _):
     return return_params
 
 
-def give_up(update, _):
-    pass
+def handle_give_up(update, _):
+    global questions_answers
+    short_correct_answer = questions_answers[r.get(str(update.effective_user.id)).decode('utf-8')]. \
+        split('.', 1)[0].replace('"', '')
+    update.message.reply_text(short_correct_answer)
+    handle_new_question_request(update, _)
+    return TYPING_ANSWER
 
 
 def my_count(update, _):
@@ -76,7 +78,7 @@ def cancel(update, _):
     return ConversationHandler.END
 
 
-def _error(bot, update, _error):
+def _error(update, _error):
     logger.warning(f'Update {update} caused error {_error}')
 
 
@@ -125,10 +127,10 @@ def main():
         entry_points=[CommandHandler('start', start)],
         states={
             CHOOSING: [MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
-                       MessageHandler(Filters.regex('^Сдаться$'), give_up),
-                       MessageHandler(Filters.regex('^Мой счет$'), my_count),
                        ],
-            TYPING_ANSWER: [MessageHandler(Filters.text, handle_solution_attempt, pass_user_data=True),
+            TYPING_ANSWER: [MessageHandler(Filters.regex('^Сдаться$'), handle_give_up),
+                            MessageHandler(Filters.regex('^Мой счет$'), my_count),
+                            MessageHandler(Filters.text, handle_solution_attempt, pass_user_data=True),
                             ],
         },
         fallbacks=[CommandHandler('cancel', cancel)]
@@ -136,8 +138,6 @@ def main():
 
     dispatcher.add_handler(conversation_handler)
     dispatcher.add_error_handler(_error)
-    # dispatcher.add_handler(CommandHandler("start", start))
-    # dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
     updater.start_polling()
     updater.idle()
