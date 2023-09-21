@@ -96,34 +96,35 @@ def main():
 
     longpoll = VkLongPoll(vk_session)
     for event in longpoll.listen():
-        if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-            try:
-                if event.text.lower() == "привет" or event.text.lower() == "старт":
-                    vk_api.messages.send(
-                        user_id=event.user_id,
-                        message="Привет. Стартуем викторину!",
-                        random_id=random.randint(1, 1000),
-                        keyboard=keyboard.get_keyboard(),
-                    )
-                    handle_new_question_request(event, vk_api, storage)
-                elif event.text == "Новый вопрос":
-                    handle_new_question_request(event, vk_api, storage)
-                elif event.text == "Сдаться":
-                    handle_give_up(event, vk_api, storage)
-                elif event.text == "Мой счет":
-                    handle_count(event, vk_api, storage)
-                elif event.text == "Завершить":
-                    vk_api.messages.send(
-                        user_id=event.user_id,
-                        message='Пока-пока!!!!',
-                        random_id=random.randint(1, 1000),
-                    )
-                else:
-                    handle_solution_attempt(event, vk_api, storage)
-            except urllib.error.HTTPError as error:
-                logger.error(f'VK-бот упал с ошибкой: {error} {error.url}')
-            except Exception as error:
-                logger.error(f'VK-бот упал с ошибкой: {error}')
+        if not (event.type == VkEventType.MESSAGE_NEW and event.to_me):
+            continue
+        try:
+            if event.text.lower() == "привет" or event.text.lower() == "старт":
+                vk_api.messages.send(
+                    user_id=event.user_id,
+                    message="Привет. Стартуем викторину!",
+                    random_id=random.randint(1, 1000),
+                    keyboard=keyboard.get_keyboard(),
+                )
+                handle_new_question_request(event, vk_api, storage)
+            elif event.text == "Новый вопрос":
+                handle_new_question_request(event, vk_api, storage)
+            elif event.text == "Сдаться":
+                handle_give_up(event, vk_api, storage)
+            elif event.text == "Мой счет":
+                handle_count(event, vk_api, storage)
+            elif event.text == "Завершить":
+                vk_api.messages.send(
+                    user_id=event.user_id,
+                    message='Пока-пока!!!!',
+                    random_id=random.randint(1, 1000),
+                )
+            else:
+                handle_solution_attempt(event, vk_api, storage)
+        except urllib.error.HTTPError as error:
+            logger.error(f'VK-бот упал с ошибкой: {error} {error.url}')
+        except Exception as error:
+            logger.error(f'VK-бот упал с ошибкой: {error}')
 
 
 if __name__ == '__main__':
