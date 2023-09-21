@@ -19,7 +19,7 @@ echo "Устанавливаем зависимости"
 pip install -r requirements.txt
 
 echo "Подготавливаем в памяти Redis вопросы-ответы"
-python3 main.py --path PPP --file 123.txt
+python3 quiz-data-upload.py
 
 echo "Копируем файлы демонов ata-upload, tg и vk, добавляем их в автозагрузку, запускаем"
 cp quiz-data-upload.service /etc/systemd/system
