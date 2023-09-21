@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def handle_new_question_request(event, vk_api, storage):
     questions_answers = storage.hgetall('questions-answers')
-    message = list(questions_answers)[random.randrange(len(questions_answers) - 1)]
+    message = random.choice(list(questions_answers))
     storage.mset({str(event.user_id): message})
     vk_api.messages.send(
         user_id=event.user_id,

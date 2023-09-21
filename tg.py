@@ -29,7 +29,7 @@ def start(update, _):
 
 def handle_new_question_request(update, _):
     questions_answers = storage.hgetall('questions-answers')
-    message = list(questions_answers)[random.randrange(len(questions_answers) - 1)]
+    message = random.choice(list(questions_answers))
     storage.mset({str(update.effective_user.id): message})
     update.message.reply_text(
         message,
