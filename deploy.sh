@@ -21,10 +21,22 @@ pip install -r requirements.txt
 echo "Подготавливаем в памяти Redis вопросы-ответы"
 python3 main.py --path PPP --file 123.txt
 
-echo "Копируем файлы демонов tg и vk, добавляем их в автозагрузку, запускаем"
+echo "Копируем файлы демонов ata-upload, tg и vk, добавляем их в автозагрузку, запускаем"
+cp quiz-data-upload.service /etc/systemd/system
+systemctl enable quiz-data-upload.service
+systemctl start quiz-data-upload.service
+echo "waiting..."
+for i in {1..3}; do
+  sleep 1s
+  echo "waiting..."
+done
+echo "done"
+
 cp quiz-tg.service /etc/systemd/system
 cp quiz-vk.service /etc/systemd/system
 systemctl enable quiz-tg.service
 systemctl enable quiz-vk.service
 systemctl start quiz-tg.service
 systemctl start quiz-vk.service
+
+echo "all deploy done"

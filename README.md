@@ -52,6 +52,20 @@ PONG
 ![vk_bot](https://github.com/mulchus/quiz/assets/111083714/ee7d2111-3203-4877-8f0a-02daefabd054)  
   
 
+### Автоматизированный деплой
+Для автоматизации деплоя в корне проекта имеются 4 файла:
+- quiz-data-upload.service
+- quiz-tg.service
+- quiz-vk.service
+- deploy.sh  
+
+На сервере в папке проекта `/opt/quiz/` запускаем:
+```commandline
+chmod ugo+x deploy.sh
+./deploy.sh
+```  
+
+
 ## Цели проекта
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org).

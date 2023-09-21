@@ -1,0 +1,5 @@
+[Service]
+ExecStart=/opt/quiz/venv/bin/python3 /opt/quiz/main.py --path PPP --file 123.txt
+Restart=always
+[Install]
+WantedBy=multi-user.target
