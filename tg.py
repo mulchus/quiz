@@ -1,14 +1,16 @@
 import os
-import tg_bot_markups
 import logging
 import random
 import redis
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
+TG_BOT_KEYBOARD = [['Новый вопрос', 'Сдаться'],
+                   ['Мой счет']]
 CHOOSING, TYPING_ANSWER = range(2)
 
 load_dotenv()
@@ -22,7 +24,7 @@ storage = redis.Redis(
 def start(update, _):
     update.message.reply_text(
         fr'Привет! Я бот для викторин.',
-        reply_markup=tg_bot_markups.first_markup,
+        reply_markup=ReplyKeyboardMarkup(TG_BOT_KEYBOARD, resize_keyboard=True),
     )
     return CHOOSING
 
@@ -33,7 +35,7 @@ def handle_new_question_request(update, _):
     storage.mset({str(update.effective_user.id): message})
     update.message.reply_text(
         message,
-        reply_markup=tg_bot_markups.first_markup,
+        reply_markup=ReplyKeyboardMarkup(TG_BOT_KEYBOARD, resize_keyboard=True),
     )
     return TYPING_ANSWER
 
@@ -51,7 +53,7 @@ def handle_solution_attempt(update, _):
         return_params = TYPING_ANSWER
     update.message.reply_text(
         message,
-        reply_markup=tg_bot_markups.first_markup,
+        reply_markup=ReplyKeyboardMarkup(TG_BOT_KEYBOARD, resize_keyboard=True),
     )
     return return_params
 
@@ -73,7 +75,7 @@ def cancel(update, _):
     user = update.message.from_user
     logger.info(f'User {user.first_name} canceled the conversation.')
     update.message.reply_text('Bye! I hope we can talk again some day.',
-                              reply_markup=tg_bot_markups.remove_markup)
+                              reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
 
