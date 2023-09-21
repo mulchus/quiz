@@ -1,5 +1,5 @@
 [Service]
-ExecStart=/opt/quiz/venv/bin/python3 /opt/quiz/main.py --path PPP --file 123.txt
+ExecStart=/opt/quiz/venv/bin/python3 /opt/quiz/quiz-data-upload.py
 Restart=always
 [Install]
 WantedBy=multi-user.target

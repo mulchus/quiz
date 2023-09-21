@@ -35,7 +35,7 @@ PONG
 
 #### Подготовка викторины  
 
-- Запустите скрипт `python main.py [--path PATH] [--file FILES]`  
+- Запустите скрипт `python quiz-data-upload.py [--path PATH] [--file FILES]`  
   --path [PATH] - имя папки в корне проекта с файлами вопросов-ответов (по умолчанию - quiz-questions)  
   --files [FILES ...]  имена файлов вопросов-ответов для викторины (по умолчанию - questions-answers.txt)    
     
