@@ -3,11 +3,11 @@ import random
 import urllib
 import vk_api as vk
 import logging
+import redis
 
 from dotenv import load_dotenv
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-from vk_api.utils import get_random_id
 from urllib.error import HTTPError
 
 
@@ -15,6 +15,58 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+storage = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+
+
+def handle_new_question_request(event, vk_api, keyboard):
+    questions_answers = storage.hgetall('questions_answers')
+    message = list(questions_answers)[random.randrange(len(questions_answers) - 1)]
+    storage.mset({str(event.user_id): message})
+    vk_api.messages.send(
+        user_id=event.user_id,
+        message=message,
+        random_id=random.randint(1,1000),
+        # keyboard=keyboard.get_keyboard(),
+    )
+
+
+def handle_solution_attempt(event, vk_api, keyboard):
+    questions_answers = storage.hgetall('questions_answers')
+    short_correct_answer = questions_answers[storage.get(str(event.user_id))].\
+        split('.', 1)[0].replace('"', '')
+    if event.text.lower() in short_correct_answer.lower() and \
+            ((event.text.lower().count(' ') + 1) / (short_correct_answer.lower().count(' ') + 1) * 100) > 50:
+        message = 'Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»'
+    else:
+        message = 'Неправильно… Попробуешь ещё раз?'
+    vk_api.messages.send(
+        user_id=event.user_id,
+        message=message,
+        random_id=random.randint(1,1000),
+        # keyboard=keyboard.get_keyboard(),
+    )
+
+
+def handle_give_up(event, vk_api, keyboard):
+    questions_answers = storage.hgetall('questions_answers')
+    short_correct_answer = questions_answers[storage.get(str(event.user_id))]. \
+        split('.', 1)[0].replace('"', '')
+    vk_api.messages.send(
+        user_id=event.user_id,
+        message=short_correct_answer,
+        random_id=random.randint(1,1000),
+        # keyboard=keyboard.get_keyboard(),
+    )
+    return handle_new_question_request(event, vk_api, keyboard)
+
+
+def handle_my_count(event, vk_api, keyboard):
+    pass
+
+
+def _error(update, _error):
+    logger.warning(f'Update {update} caused error {_error}')
 
 
 def echo(event, vk_api, keyboard):
@@ -26,41 +78,47 @@ def echo(event, vk_api, keyboard):
     )
 
 
-# def answer(event, vk_api, project_id):
-#     # intent_text, is_fallback = functions.detect_intent_text(project_id, event.user_id, event.text, 'ru')
-#     # if not is_fallback:
-#     vk_api.messages.send(
-#         user_id=event.user_id,
-#         message=intent_text,
-#         random_id=random.randint(1, 1000)
-#     )
-
-
 def main():
     load_dotenv()
-    # logger = functions.set_logger()
-    # project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
     vk_token = os.getenv('VK_TOKEN')
     vk_session = vk.VkApi(token=vk_token)
     vk_api = vk_session.get_api()
 
-    keyboard = VkKeyboard(one_time=True)
+    keyboard = VkKeyboard(one_time=False)
 
-    keyboard.add_button('Белая кнопка', color=VkKeyboardColor.SECONDARY)
-    keyboard.add_button('Зелёная кнопка', color=VkKeyboardColor.POSITIVE)
-
+    keyboard.add_button('Новый вопрос', color=VkKeyboardColor.SECONDARY)
+    keyboard.add_button('Сдаться', color=VkKeyboardColor.NEGATIVE)
     keyboard.add_line()  # Переход на вторую строку
-    keyboard.add_button('Красная кнопка', color=VkKeyboardColor.NEGATIVE)
-
+    keyboard.add_button('Мой счет', color=VkKeyboardColor.POSITIVE)
     keyboard.add_line()
-    keyboard.add_button('Синяя кнопка', color=VkKeyboardColor.PRIMARY)
+    keyboard.add_button('Завершить', color=VkKeyboardColor.PRIMARY)
 
     longpoll = VkLongPoll(vk_session)
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.to_me:
             try:
-                echo(event, vk_api, keyboard)
-                # answer(event, vk_api, project_id)
+                if event.text.lower() == "привет" or event.text.lower() == "старт":
+                    vk_api.messages.send(
+                        user_id=event.user_id,
+                        message="Привет. Стартуем викторину!",
+                        random_id=random.randint(1,1000),
+                        keyboard=keyboard.get_keyboard(),
+                    )
+                    handle_new_question_request(event, vk_api, keyboard)
+                elif event.text == "Новый вопрос":
+                    handle_new_question_request(event, vk_api, keyboard)
+                elif event.text == "Сдаться":
+                    handle_give_up(event, vk_api, keyboard)
+                elif event.text == "Мой счет":
+                    handle_my_count(event, vk_api, keyboard)
+                elif event.text == "Завершить":
+                    vk_api.messages.send(
+                        user_id=event.user_id,
+                        message='Пока-пока!!!!',
+                        random_id=random.randint(1,1000),
+                    )
+                else:
+                    handle_solution_attempt(event, vk_api, keyboard)
             except urllib.error.HTTPError as error:
                 logger.error(f'VK-бот упал с ошибкой: {error} {error.url}')
             except Exception as error:
