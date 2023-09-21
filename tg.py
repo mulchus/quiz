@@ -41,7 +41,7 @@ def handle_new_question_request(update, _):
     return TYPING_ANSWER
 
 
-def handle_solution_attempt(update, _, storage):
+def handle_solution_attempt(update, _):
     questions_answers = storage.hgetall('questions-answers')
     short_correct_answer = questions_answers[storage.get(str(update.effective_user.id))].\
         split('.', 1)[0].replace('"', '')
@@ -59,16 +59,16 @@ def handle_solution_attempt(update, _, storage):
     return return_params
 
 
-def handle_give_up(update, _, storage):
+def handle_give_up(update, _):
     questions_answers = storage.hgetall('questions-answers')
     short_correct_answer = questions_answers[storage.get(str(update.effective_user.id))]. \
         split('.', 1)[0].replace('"', '')
     update.message.reply_text(short_correct_answer)
-    handle_new_question_request(update, _, storage)
+    handle_new_question_request(update, _)
     return TYPING_ANSWER
 
 
-def my_count(update, _):
+def handle_count(update, _):
     pass
 
 
@@ -93,7 +93,7 @@ def main():
             CHOOSING: [MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
                        ],
             TYPING_ANSWER: [MessageHandler(Filters.regex('^Сдаться$'), handle_give_up),
-                            MessageHandler(Filters.regex('^Мой счет$'), my_count),
+                            MessageHandler(Filters.regex('^Мой счет$'), handle_count),
                             MessageHandler(Filters.text, handle_solution_attempt, pass_user_data=True),
                             ],
         },
