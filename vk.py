@@ -20,7 +20,7 @@ def handle_new_question_request(event, vk_api, storage):
     vk_api.messages.send(
         user_id=event.user_id,
         message=message,
-        random_id=random.randint(1,1000),
+        random_id=random.randint(1, 1000),
     )
 
 
@@ -36,7 +36,7 @@ def handle_solution_attempt(event, vk_api, storage):
     vk_api.messages.send(
         user_id=event.user_id,
         message=message,
-        random_id=random.randint(1,1000),
+        random_id=random.randint(1, 1000),
     )
 
 
@@ -47,12 +47,13 @@ def handle_give_up(event, vk_api, storage):
     vk_api.messages.send(
         user_id=event.user_id,
         message=short_correct_answer,
-        random_id=random.randint(1,1000),
+        random_id=random.randint(1, 1000),
     )
     return handle_new_question_request(event, vk_api, storage)
 
 
-def handle_my_count(event, vk_api, storage):
+def handle_count(event, vk_api, storage):
+    # здесь будет подсчет результата ответов
     pass
 
 
@@ -64,7 +65,7 @@ def echo(event, vk_api, keyboard):
     vk_api.messages.send(
         user_id=event.user_id,
         message=event.text,
-        random_id=random.randint(1,1000),
+        random_id=random.randint(1, 1000),
         keyboard=keyboard.get_keyboard(),
     )
 
@@ -101,7 +102,7 @@ def main():
                     vk_api.messages.send(
                         user_id=event.user_id,
                         message="Привет. Стартуем викторину!",
-                        random_id=random.randint(1,1000),
+                        random_id=random.randint(1, 1000),
                         keyboard=keyboard.get_keyboard(),
                     )
                     handle_new_question_request(event, vk_api, storage)
@@ -110,12 +111,12 @@ def main():
                 elif event.text == "Сдаться":
                     handle_give_up(event, vk_api, storage)
                 elif event.text == "Мой счет":
-                    handle_my_count(event, vk_api, storage)
+                    handle_count(event, vk_api, storage)
                 elif event.text == "Завершить":
                     vk_api.messages.send(
                         user_id=event.user_id,
                         message='Пока-пока!!!!',
-                        random_id=random.randint(1,1000),
+                        random_id=random.randint(1, 1000),
                     )
                 else:
                     handle_solution_attempt(event, vk_api, storage)

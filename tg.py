@@ -68,6 +68,7 @@ def handle_give_up(update, _):
 
 
 def handle_count(update, _):
+    # здесь будет подсчет результата ответов
     pass
 
 
