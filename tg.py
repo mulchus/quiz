@@ -26,7 +26,7 @@ def start(update, _):
 
 
 def handle_new_question_request(update, _):
-    questions_answers = storage.hgetall('questions_answers')
+    questions_answers = storage.hgetall('questions-answers')
     message = list(questions_answers)[random.randrange(len(questions_answers) - 1)]
     storage.mset({str(update.effective_user.id): message})
     update.message.reply_text(
@@ -37,7 +37,7 @@ def handle_new_question_request(update, _):
 
 
 def handle_solution_attempt(update, _):
-    questions_answers = storage.hgetall('questions_answers')
+    questions_answers = storage.hgetall('questions-answers')
     short_correct_answer = questions_answers[storage.get(str(update.effective_user.id))].\
         split('.', 1)[0].replace('"', '')
     if update.message.text.lower() in short_correct_answer.lower() and \
@@ -55,7 +55,7 @@ def handle_solution_attempt(update, _):
 
 
 def handle_give_up(update, _):
-    questions_answers = storage.hgetall('questions_answers')
+    questions_answers = storage.hgetall('questions-answers')
     short_correct_answer = questions_answers[storage.get(str(update.effective_user.id))]. \
         split('.', 1)[0].replace('"', '')
     update.message.reply_text(short_correct_answer)

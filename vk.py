@@ -20,7 +20,7 @@ storage = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
 
 def handle_new_question_request(event, vk_api, keyboard):
-    questions_answers = storage.hgetall('questions_answers')
+    questions_answers = storage.hgetall('questions-answers')
     message = list(questions_answers)[random.randrange(len(questions_answers) - 1)]
     storage.mset({str(event.user_id): message})
     vk_api.messages.send(
@@ -32,7 +32,7 @@ def handle_new_question_request(event, vk_api, keyboard):
 
 
 def handle_solution_attempt(event, vk_api, keyboard):
-    questions_answers = storage.hgetall('questions_answers')
+    questions_answers = storage.hgetall('questions-answers')
     short_correct_answer = questions_answers[storage.get(str(event.user_id))].\
         split('.', 1)[0].replace('"', '')
     if event.text.lower() in short_correct_answer.lower() and \
@@ -49,7 +49,7 @@ def handle_solution_attempt(event, vk_api, keyboard):
 
 
 def handle_give_up(event, vk_api, keyboard):
-    questions_answers = storage.hgetall('questions_answers')
+    questions_answers = storage.hgetall('questions-answers')
     short_correct_answer = questions_answers[storage.get(str(event.user_id))]. \
         split('.', 1)[0].replace('"', '')
     vk_api.messages.send(

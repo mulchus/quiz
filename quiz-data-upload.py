@@ -16,7 +16,7 @@ def main():
              '(по умолчанию - quiz-questions)'
     )
     parser.add_argument(
-        '--files',
+        '--file',
         nargs='*',
         default='questions-answers.txt',
         help='имена файлов вопросов-ответов для викторины '
@@ -24,14 +24,14 @@ def main():
     )
 
     path = os.path.join(os.getcwd(), parser.parse_args().path)
+    print(parser.parse_args().path)
+    print(parser.parse_args().file)
 
-    for file in parser.parse_args().files:
-        try:
-            with open(os.path.join(path, file), "r", encoding="KOI8-R") as my_file:
-                file_contents = my_file.read()
-                # print(f'{file}: {file_contents[:50]}' )
-        except (FileNotFoundError, ValueError) as error:
-            print(f'Неверно указан путь к файлу.\nОшибка: {error}')
+    try:
+        with open(os.path.join(path, parser.parse_args().file), "r", encoding="KOI8-R") as questions_answers_file:
+            file_contents = questions_answers_file.read()
+    except (FileNotFoundError, ValueError) as error:
+        print(f'Неверно указан путь к файлу.\nОшибка: {error}')
 
     separated_contents = file_contents.split('\n\n')
     questions_answers = {}
@@ -42,8 +42,8 @@ def main():
         elif 'Ответ:' in content:
             answer = content[content.find(':') + 2:].replace('\n', ' ')
             questions_answers[question] = answer
-
-    storage.hmset(name='questions_answers', mapping=questions_answers)
+    print(questions_answers)
+    storage.hmset(name='questions-answers', mapping=questions_answers)
     questions_answers.clear()
 
 
