@@ -1,0 +1,5 @@
+[Service]
+ExecStart=/opt/quiz/venv/bin/python3 /opt/quiz/vk.py
+Restart=always
+[Install]
+WantedBy=multi-user.target
