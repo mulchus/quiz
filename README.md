@@ -35,24 +35,22 @@ PONG
 
 #### Подготовка викторины  
 
-- Запустите скрипт `python main.py [--path PATH] [--file FILES]`
-  --path [PATH] - имя папки в корне проекта с файлами вопросов-ответов (по умолчанию - quiz-questions)
-  --files [FILES ...]  имена файлов вопросов-ответов для викторины (по умолчанию - questions-answers.txt)  
+- Запустите скрипт `python main.py [--path PATH] [--file FILES]`  
+  --path [PATH] - имя папки в корне проекта с файлами вопросов-ответов (по умолчанию - quiz-questions)  
+  --files [FILES ...]  имена файлов вопросов-ответов для викторины (по умолчанию - questions-answers.txt)    
     
 
 #### Запуск ботов  
 
 - Запуск бота в Telegram - `python tg.py` (в отдельном окне командной строки)
 - Запуск бота в VK - `python vk.py` (в отдельном окне командной строки)  
-
+  
   Результат викторины с [ботом в Telegram](https://t.me/mulchusbot)  
-
+![tg_bot](https://github.com/mulchus/quiz/assets/111083714/ce34b7e5-033d-4e87-b95a-bcf3a47ca4aa)  
   
   Результат викторины с [ботом в VK](https://vk.com/club219033181)  
-
+![vk_bot](https://github.com/mulchus/quiz/assets/111083714/ee7d2111-3203-4877-8f0a-02daefabd054)  
   
-Общайтесь с ботами и наслаждайтесь реакцией. 
-
 
 ## Цели проекта
 
