@@ -19,6 +19,20 @@
 - Установите зависимости: `pip install -r requirements.txt`  
 
 
+#### Установка Redis
+- Установите Redis - хранилище структур данных в памяти с открытым исходным кодом (лицензия BSD), 
+используемое в качестве базы данных, кэша, посредника сообщений  
+[Инструкция для Linux](https://redis.io/docs/getting-started/installation/install-redis-on-linux/)  
+[Инструкция для Windows 10 и выше](https://redis.io/docs/getting-started/installation/install-redis-on-windows/)  
+[Инструкция для Windows 8.1 и ниже](https://dzone.com/articles/running-redis-on-windows-81-and-prior)  
+Проверка установки:
+```commandline
+root@......:/opt/quiz# redis-cli
+127.0.0.1:6379> ping
+PONG
+127.0.0.1:6379>
+```
+
 #### Подготовка викторины  
 
 - Запустите скрипт `python main.py [--path PATH] [--file FILES]`
