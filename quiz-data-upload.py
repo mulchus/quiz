@@ -1,12 +1,27 @@
 import os
 import argparse
 import redis
+import logging
+
+from dotenv import load_dotenv
+
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 
-storage = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+def _error(update, _error):
+    logger.warning(f'Update {update} caused error {_error}')
 
 
 def main():
+    load_dotenv()
+    storage = redis.Redis(
+        host=os.environ.get('REDIS_HOST', default='localhost'),
+        port=os.environ.get('REDIS_PORT', default=6379),
+        db=os.environ.get('REDIS_DB', default=0),
+        decode_responses=True)
     parser = argparse.ArgumentParser(description='Приложение "Викторина"')
     parser.add_argument(
         '--path',
@@ -24,14 +39,11 @@ def main():
     )
 
     path = os.path.join(os.getcwd(), parser.parse_args().path)
-    print(parser.parse_args().path)
-    print(parser.parse_args().file)
-
     try:
         with open(os.path.join(path, parser.parse_args().file), "r", encoding="KOI8-R") as questions_answers_file:
             file_contents = questions_answers_file.read()
     except (FileNotFoundError, ValueError) as error:
-        print(f'Неверно указан путь к файлу.\nОшибка: {error}')
+        logger.info(f'Неверно указан путь к файлу.\nОшибка: {error}')
 
     separated_contents = file_contents.split('\n\n')
     questions_answers = {}
@@ -42,7 +54,6 @@ def main():
         elif 'Ответ:' in content:
             answer = content[content.find(':') + 2:].replace('\n', ' ')
             questions_answers[question] = answer
-    print(questions_answers)
     storage.hmset(name='questions-answers', mapping=questions_answers)
     questions_answers.clear()
 

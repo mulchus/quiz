@@ -16,10 +16,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-storage = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
-
-def handle_new_question_request(event, vk_api, keyboard):
+def handle_new_question_request(event, vk_api, storage):
     questions_answers = storage.hgetall('questions-answers')
     message = list(questions_answers)[random.randrange(len(questions_answers) - 1)]
     storage.mset({str(event.user_id): message})
@@ -27,11 +25,10 @@ def handle_new_question_request(event, vk_api, keyboard):
         user_id=event.user_id,
         message=message,
         random_id=random.randint(1,1000),
-        # keyboard=keyboard.get_keyboard(),
     )
 
 
-def handle_solution_attempt(event, vk_api, keyboard):
+def handle_solution_attempt(event, vk_api, storage):
     questions_answers = storage.hgetall('questions-answers')
     short_correct_answer = questions_answers[storage.get(str(event.user_id))].\
         split('.', 1)[0].replace('"', '')
@@ -44,11 +41,10 @@ def handle_solution_attempt(event, vk_api, keyboard):
         user_id=event.user_id,
         message=message,
         random_id=random.randint(1,1000),
-        # keyboard=keyboard.get_keyboard(),
     )
 
 
-def handle_give_up(event, vk_api, keyboard):
+def handle_give_up(event, vk_api, storage):
     questions_answers = storage.hgetall('questions-answers')
     short_correct_answer = questions_answers[storage.get(str(event.user_id))]. \
         split('.', 1)[0].replace('"', '')
@@ -56,12 +52,11 @@ def handle_give_up(event, vk_api, keyboard):
         user_id=event.user_id,
         message=short_correct_answer,
         random_id=random.randint(1,1000),
-        # keyboard=keyboard.get_keyboard(),
     )
-    return handle_new_question_request(event, vk_api, keyboard)
+    return handle_new_question_request(event, vk_api, storage)
 
 
-def handle_my_count(event, vk_api, keyboard):
+def handle_my_count(event, vk_api, storage):
     pass
 
 
@@ -80,6 +75,12 @@ def echo(event, vk_api, keyboard):
 
 def main():
     load_dotenv()
+    storage = redis.Redis(
+        host=os.environ.get('REDIS_HOST', default='localhost'),
+        port=os.environ.get('REDIS_PORT', default=6379),
+        db=os.environ.get('REDIS_DB', default=0),
+        decode_responses=True)
+
     vk_token = os.getenv('VK_TOKEN')
     vk_session = vk.VkApi(token=vk_token)
     vk_api = vk_session.get_api()
@@ -104,13 +105,13 @@ def main():
                         random_id=random.randint(1,1000),
                         keyboard=keyboard.get_keyboard(),
                     )
-                    handle_new_question_request(event, vk_api, keyboard)
+                    handle_new_question_request(event, vk_api, storage)
                 elif event.text == "Новый вопрос":
-                    handle_new_question_request(event, vk_api, keyboard)
+                    handle_new_question_request(event, vk_api, storage)
                 elif event.text == "Сдаться":
-                    handle_give_up(event, vk_api, keyboard)
+                    handle_give_up(event, vk_api, storage)
                 elif event.text == "Мой счет":
-                    handle_my_count(event, vk_api, keyboard)
+                    handle_my_count(event, vk_api, storage)
                 elif event.text == "Завершить":
                     vk_api.messages.send(
                         user_id=event.user_id,
@@ -118,7 +119,7 @@ def main():
                         random_id=random.randint(1,1000),
                     )
                 else:
-                    handle_solution_attempt(event, vk_api, keyboard)
+                    handle_solution_attempt(event, vk_api, storage)
             except urllib.error.HTTPError as error:
                 logger.error(f'VK-бот упал с ошибкой: {error} {error.url}')
             except Exception as error:

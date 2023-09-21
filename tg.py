@@ -14,7 +14,12 @@ logger = logging.getLogger(__name__)
 
 CHOOSING, TYPING_ANSWER = range(2)
 
-storage = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+load_dotenv()
+storage = redis.Redis(
+    host=os.environ.get('REDIS_HOST', default='localhost'),
+    port=os.environ.get('REDIS_PORT', default=6379),
+    db=os.environ.get('REDIS_DB', default=0),
+    decode_responses=True)
 
 
 def start(update, _):
@@ -36,7 +41,7 @@ def handle_new_question_request(update, _):
     return TYPING_ANSWER
 
 
-def handle_solution_attempt(update, _):
+def handle_solution_attempt(update, _, storage):
     questions_answers = storage.hgetall('questions-answers')
     short_correct_answer = questions_answers[storage.get(str(update.effective_user.id))].\
         split('.', 1)[0].replace('"', '')
@@ -54,12 +59,12 @@ def handle_solution_attempt(update, _):
     return return_params
 
 
-def handle_give_up(update, _):
+def handle_give_up(update, _, storage):
     questions_answers = storage.hgetall('questions-answers')
     short_correct_answer = questions_answers[storage.get(str(update.effective_user.id))]. \
         split('.', 1)[0].replace('"', '')
     update.message.reply_text(short_correct_answer)
-    handle_new_question_request(update, _)
+    handle_new_question_request(update, _, storage)
     return TYPING_ANSWER
 
 
@@ -80,7 +85,6 @@ def _error(update, _error):
 
 
 def main():
-    load_dotenv()
     updater = Updater(os.environ.get('TELEGRAM_TOKEN'))
     dispatcher = updater.dispatcher
     conversation_handler = ConversationHandler(
