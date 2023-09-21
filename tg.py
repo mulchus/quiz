@@ -14,9 +14,7 @@ logger = logging.getLogger(__name__)
 
 CHOOSING, TYPING_ANSWER = range(2)
 
-# global questions_answers
-
-r = redis.Redis(host='localhost', port=6379, db=0)
+storage = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
 
 def start(update, _):
@@ -28,11 +26,9 @@ def start(update, _):
 
 
 def handle_new_question_request(update, _):
-    # global questions_answers
-    questions_answers = r.get('questions_answers').decode('utf-8')
-    print(questions_answers[:600])
+    questions_answers = storage.hgetall('questions_answers')
     message = list(questions_answers)[random.randrange(len(questions_answers) - 1)]
-    r.mset({str(update.effective_user.id): message.encode('utf-8'), })
+    storage.mset({str(update.effective_user.id): message})
     update.message.reply_text(
         message,
         reply_markup=tg_bot_markups.first_markup,
@@ -41,9 +37,8 @@ def handle_new_question_request(update, _):
 
 
 def handle_solution_attempt(update, _):
-    # global questions_answers
-    questions_answers = r.get('questions_answers').decode('utf-8')
-    short_correct_answer = questions_answers[r.get(str(update.effective_user.id)).decode('utf-8')].\
+    questions_answers = storage.hgetall('questions_answers')
+    short_correct_answer = questions_answers[storage.get(str(update.effective_user.id))].\
         split('.', 1)[0].replace('"', '')
     if update.message.text.lower() in short_correct_answer.lower() and \
             ((update.message.text.lower().count(' ') + 1) / (short_correct_answer.lower().count(' ') + 1) * 100) > 50:
@@ -60,9 +55,8 @@ def handle_solution_attempt(update, _):
 
 
 def handle_give_up(update, _):
-    # global questions_answers
-    questions_answers = r.get('questions_answers').decode('utf-8')
-    short_correct_answer = questions_answers[r.get(str(update.effective_user.id)).decode('utf-8')]. \
+    questions_answers = storage.hgetall('questions_answers')
+    short_correct_answer = questions_answers[storage.get(str(update.effective_user.id))]. \
         split('.', 1)[0].replace('"', '')
     update.message.reply_text(short_correct_answer)
     handle_new_question_request(update, _)
@@ -87,7 +81,6 @@ def _error(update, _error):
 
 def main():
     load_dotenv()
-
     updater = Updater(os.environ.get('TELEGRAM_TOKEN'))
     dispatcher = updater.dispatcher
     conversation_handler = ConversationHandler(
