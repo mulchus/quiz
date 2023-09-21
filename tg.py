@@ -7,9 +7,6 @@ import redis
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 from dotenv import load_dotenv
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-)
 logger = logging.getLogger(__name__)
 
 CHOOSING, TYPING_ANSWER = range(2)
@@ -85,6 +82,9 @@ def _error(update, _error):
 
 
 def main():
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+    )
     updater = Updater(os.environ.get('TELEGRAM_TOKEN'))
     dispatcher = updater.dispatcher
     conversation_handler = ConversationHandler(

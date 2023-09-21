@@ -10,10 +10,6 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from urllib.error import HTTPError
 
-
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-)
 logger = logging.getLogger(__name__)
 
 
@@ -75,6 +71,9 @@ def echo(event, vk_api, keyboard):
 
 def main():
     load_dotenv()
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+    )
     storage = redis.Redis(
         host=os.environ.get('REDIS_HOST', default='localhost'),
         port=os.environ.get('REDIS_PORT', default=6379),

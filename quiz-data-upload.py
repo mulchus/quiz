@@ -5,9 +5,6 @@ import logging
 
 from dotenv import load_dotenv
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-)
 logger = logging.getLogger(__name__)
 
 
@@ -22,6 +19,9 @@ def main():
         port=os.environ.get('REDIS_PORT', default=6379),
         db=os.environ.get('REDIS_DB', default=0),
         decode_responses=True)
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+    )
     parser = argparse.ArgumentParser(description='Приложение "Викторина"')
     parser.add_argument(
         '--path',
