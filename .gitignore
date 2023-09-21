@@ -1,6 +1,6 @@
 media/
 staticfiles/
-quiz-questions/
+quiz-questions-all/
 .idea/
 
 # Byte-compiled / optimized / DLL files
