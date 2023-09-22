@@ -13,13 +13,6 @@ TG_BOT_KEYBOARD = [['Новый вопрос', 'Сдаться'],
                    ['Мой счет']]
 CHOOSING, TYPING_ANSWER = range(2)
 
-load_dotenv()
-storage = redis.Redis(
-    host=os.environ.get('REDIS_HOST', default='localhost'),
-    port=os.environ.get('REDIS_PORT', default=6379),
-    db=os.environ.get('REDIS_DB', default=0),
-    decode_responses=True)
-
 
 def start(update, _):
     update.message.reply_text(
@@ -29,7 +22,7 @@ def start(update, _):
     return CHOOSING
 
 
-def handle_new_question_request(update, _):
+def handle_new_question_request(update, _, storage):
     questions_answers = storage.hgetall('questions-answers')
     message = random.choice(list(questions_answers))
     storage.mset({str(update.effective_user.id): message})
@@ -40,7 +33,7 @@ def handle_new_question_request(update, _):
     return TYPING_ANSWER
 
 
-def handle_solution_attempt(update, _):
+def handle_solution_attempt(update, _, storage):
     questions_answers = storage.hgetall('questions-answers')
     short_correct_answer = questions_answers[storage.get(str(update.effective_user.id))].\
         split('.', 1)[0].replace('"', '')
@@ -58,16 +51,16 @@ def handle_solution_attempt(update, _):
     return return_params
 
 
-def handle_give_up(update, _):
+def handle_give_up(update, _, storage):
     questions_answers = storage.hgetall('questions-answers')
     short_correct_answer = questions_answers[storage.get(str(update.effective_user.id))]. \
         split('.', 1)[0].replace('"', '')
     update.message.reply_text(short_correct_answer)
-    handle_new_question_request(update, _)
+    handle_new_question_request(update, _, storage)
     return TYPING_ANSWER
 
 
-def handle_count(update, _):
+def handle_count(update, _, storage):
     # здесь будет подсчет результата ответов
     pass
 
@@ -85,6 +78,14 @@ def _error(update, _error):
 
 
 def main():
+    load_dotenv()
+    storage = redis.Redis(
+        host=os.environ.get('REDIS_HOST', default='localhost'),
+        port=os.environ.get('REDIS_PORT', default=6379),
+        db=os.environ.get('REDIS_DB', default=0),
+        decode_responses=True
+    )
+
     logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
     )
@@ -93,11 +94,17 @@ def main():
     conversation_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            CHOOSING: [MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
+            CHOOSING: [MessageHandler(Filters.regex('^Новый вопрос$'),
+                                      lambda update, _: handle_new_question_request(update, _, storage)
+                                      ),
                        ],
-            TYPING_ANSWER: [MessageHandler(Filters.regex('^Сдаться$'), handle_give_up),
-                            MessageHandler(Filters.regex('^Мой счет$'), handle_count),
-                            MessageHandler(Filters.text, handle_solution_attempt, pass_user_data=True),
+            TYPING_ANSWER: [MessageHandler(Filters.regex('^Сдаться$'),
+                                           lambda update, _: handle_give_up(update, _, storage)),
+                            MessageHandler(Filters.regex('^Мой счет$'),
+                                           lambda update, _: handle_count(update, _, storage)),
+                            MessageHandler(Filters.text,
+                                           lambda update, _: handle_solution_attempt(update, _, storage),
+                                           pass_user_data=True),
                             ],
         },
         fallbacks=[CommandHandler('cancel', cancel)]
