@@ -8,10 +8,6 @@ from dotenv import load_dotenv
 logger = logging.getLogger(__name__)
 
 
-def _error(update, _error):
-    logger.warning(f'Update {update} caused error {_error}')
-
-
 def main():
     load_dotenv()
     storage = redis.Redis(
@@ -44,7 +40,7 @@ def main():
             file_contents = questions_answers_file.read()
     except (FileNotFoundError, ValueError) as error:
         logger.info(f'Неверно указан путь к файлу.\nОшибка: {error}')
-
+        exit()
     separated_contents = file_contents.split('\n\n')
     questions_answers = {}
     question = ''

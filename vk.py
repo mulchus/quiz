@@ -57,10 +57,6 @@ def handle_count(event, vk_api, storage):
     pass
 
 
-def _error(update, _error):
-    logger.warning(f'Update {update} caused error {_error}')
-
-
 def echo(event, vk_api, keyboard):
     vk_api.messages.send(
         user_id=event.user_id,
